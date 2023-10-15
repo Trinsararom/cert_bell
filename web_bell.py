@@ -27,7 +27,7 @@ def crop_image(img):
     right_crop1 = int(width/2.19625)
 
     top_crop2 = int(height/4.12)
-    bottom_crop2 = int(height/1.9776)
+    bottom_crop2 = int(height/2.38)
     left_crop2 = int(width/ 4.136)
     right_crop2 = int(width/ 2.13)
 
@@ -39,12 +39,16 @@ def crop_image(img):
     top_crop4 = int(height/1.9776)
     bottom_crop4 = int(height/1.7358)
 
+    top_crop5 = int(height/2.38)
+    bottom_crop5 = int(height/1.9776)
+
     crop1 = img[top:bottom, left_crop1:right_crop1]
     crop2 = img[top_crop2:bottom_crop2, left_crop2:right_crop2]
     crop3 = img[top_crop3:bottom_crop3, left_crop3:right_crop3]
     crop4 = img[top_crop4:bottom_crop4, left_crop2:right_crop2]
+    crop5 = img[top_crop5:bottom_crop5, left_crop2:right_crop2]
 
-    return crop1, crop2, crop3, crop4
+    return crop1, crop2, crop3, crop4, crop5
 
 # Initialize the Tesseract OCR
 def initialize_tesseract():
@@ -61,16 +65,18 @@ def process_cropped_images(img):
 
 def extract_gemstone_info(img):
     # Assuming you have the functions crop_image and process_cropped_images defined elsewhere
-    crop1, crop2, crop3, crop4 = crop_image(img)
+    crop1, crop2, crop3, crop4, crop5 = crop_image(img)
     extracted_texts1 = process_cropped_images(crop1)
     lines1 = [line for line in extracted_texts1.split('\n') if line.strip()]
 
 
     extracted_texts2 = process_cropped_images(crop2)
-    # Split each line by space and take only parts after the first space (if space exists)
     lines2 = [line.split(' ', 1)[1] if ' ' in line else line for line in extracted_texts2.split('\n')]
-    # Remove leading and trailing whitespace from each line and filter out empty strings
     lines2 = [line.strip() for line in lines2 if line.strip()]
+
+    extracted_texts5 = process_cropped_images(crop5)
+    lines5 = [line.split(' ', 1)[1] if ' ' in line else line for line in extracted_texts5.split('\n')]
+    lines5 = [line.strip() for line in lines5 if line.strip()]
 
     extracted_texts4 = process_cropped_images(crop4)
     lines4 = [line for line in extracted_texts4.split('\n') if line.strip()]
@@ -79,7 +85,7 @@ def extract_gemstone_info(img):
     lines3 = [line for line in extracted_texts3.split('\n') if line.strip()]
     filtered_lines3 = [line for line in lines3 if 'This ruby may be called' in line]
 
-    combined_lines = lines1 + lines2 + lines4 + filtered_lines3
+    combined_lines = lines1 + lines2+ lines5 + lines4 + filtered_lines3
     
     if len(combined_lines) == 11 :
         df = pd.DataFrame({i: [combined_lines[i]] for i in range(11)})
