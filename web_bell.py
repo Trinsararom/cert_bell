@@ -167,7 +167,7 @@ def detect_origin(origin):
         return "No origin"
     
     # Remove words in parentheses
-    origin_without_parentheses = origin
+    origin_without_parentheses = re.sub(r'\([^)]*\)', '', origin)
     return origin_without_parentheses.strip()
 
 def reformat_issued_date(issued_date):
@@ -188,7 +188,7 @@ def detect_mogok(origin):
 
 def generate_indication(comment):
     comment = str(comment).lower()
-    if "no indications of heating" in comment:
+    if "no" in comment or 'TE1' in comment:
         return "Unheated"
     else:
         return "Heated"
@@ -277,7 +277,8 @@ def rename_identification_to_stone(dataframe):
     return dataframe
 
 def detect_vibrant(Vibrant):
-    return str("(Vibrant)" in Vibrant)
+    Vibrant = str(Vibrant).lower() 
+    return str("vibrant" in Vibrant)
 
 # Define the function to perform all data processing steps
 def perform_data_processing(img):
@@ -285,7 +286,7 @@ def perform_data_processing(img):
     result_df = extract_gemstone_info(img)
     
     result_df["Detected_Origin"] = result_df["Origin"].apply(detect_origin)
-    result_df["Detected_Origin"] = result_df["Detected_Origin"].str.replace('Ceylon','Sri Lanka')
+    result_df["Detected_Origin"] = result_df["Detected_Origin"].str.replace('Ceylon','Sri Lanka').str.replace('Cevlon','Sri Lanka')
     result_df["Indication"] = result_df["indications"].apply(generate_indication)
     result_df["oldHeat"] = result_df.apply(lambda row: detect_old_heat(row["indications"], row["Indication"]), axis=1)
     
