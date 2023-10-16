@@ -22,14 +22,14 @@ def crop_image(img):
     height, width, channels = img.shape if len(img.shape) == 3 else (img.shape[0], img.shape[1], 1)
 
     top =  int(height/8.24)
-    bottom = int(height/ 5.266)
+    bottom = int(height/ 5.55)
     left_crop1 = int(width/ 3.05)
     right_crop1 = int(width/2.19625)
 
-    top_crop2 = int(height/4.12)
-    bottom_crop2 = int(height/2.38)
-    left_crop2 = int(width/ 4.136)
-    right_crop2 = int(width/ 2.13)
+    top_crop2 = int(height/5)
+    bottom_crop2 = int(height/1.9776)
+    left_crop2 = 0
+    right_crop2 = int(width/2)
 
     top_crop3 = int(height/ 1.6773)
     bottom_crop3 = int(height/ 1.413)
@@ -37,16 +37,18 @@ def crop_image(img):
     right_crop3 = int(width/ 2.9283)
 
     top_crop4 = int(height/1.9776)
-    bottom_crop4 = int(height/1.7358)
+    bottom_crop4 = int(height/1.73)
+    left_crop4 = int(width/ 4.136)
 
     top_crop5 = int(height/2.38)
     bottom_crop5 = int(height/1.9776)
+    left_crop5 = int(width/ 4.136)
 
     crop1 = img[top:bottom, left_crop1:right_crop1]
     crop2 = img[top_crop2:bottom_crop2, left_crop2:right_crop2]
     crop3 = img[top_crop3:bottom_crop3, left_crop3:right_crop3]
-    crop4 = img[top_crop4:bottom_crop4, left_crop2:right_crop2]
-    crop5 = img[top_crop5:bottom_crop5, left_crop2:right_crop2]
+    crop4 = img[top_crop4:bottom_crop4, left_crop4:right_crop2]
+    crop5 = img[top_crop5:bottom_crop5, left_crop5:right_crop2]
 
     return crop1, crop2, crop3, crop4, crop5
 
@@ -71,8 +73,15 @@ def extract_gemstone_info(img):
 
 
     extracted_texts2 = process_cropped_images(crop2)
-    lines2 = [line.split(' ', 1)[1] if ' ' in line else line for line in extracted_texts2.split('\n')]
+    lines2 = [line for line in extracted_texts2.split('\n')]
     lines2 = [line.strip() for line in lines2 if line.strip()]
+    lines2 = lines2[0:4]
+    lines2 = [line.split() for line in lines2]
+    g = lines2[0][-1]
+    ct = lines2[1][-2] + ' ct'
+    dimen = lines2[2][-6] + ' x ' + lines2[2][-4] + ' x ' +lines2[2][-2] + ' mm'
+    s = lines2[3][-1]
+    lines2 = [g] + [ct] + [dimen] + [s]
 
     extracted_texts5 = process_cropped_images(crop5)
     lines5 = [line.split(' ', 1)[1] if ' ' in line else line for line in extracted_texts5.split('\n')]
@@ -90,7 +99,7 @@ def extract_gemstone_info(img):
     if len(combined_lines) == 11 :
         df = pd.DataFrame({i: [combined_lines[i]] for i in range(11)})
         df[0] = df[0].str.strip('REPORT No.')
-        df[10] = df[10].str.extract(r'This ruby may be called "([^"]+)"', expand=False)
+        df[10] = df[10].str.extract(r'may be called "([^"]+)"', expand=False)
         df = df.drop([2], axis=1)
         df = df.rename(columns={0: 'certNo', 1:'issuedDate',
                                 3:'Carat',4 : 'Dimensions', 
