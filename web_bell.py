@@ -145,6 +145,8 @@ def detect_color(text):
         return "RoyalBlue"
     elif 'vibrant' in text :
         return 'Vibrant'
+    elif text == 'nan' :
+        return 'Vibrant'
     if "pigeon" in text:
         return "PigeonsBlood"
     else:
