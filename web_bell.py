@@ -135,10 +135,18 @@ def extract_gemstone_info(img):
 
 def detect_color(text):
     text = str(text).lower()  # Convert the text to lowercase
-    if "pigeon blood red" in text:
-        return "PigeonsBlood"
+    if 'vivid red' in text:
+        return "VividRed"
+    elif 'vivid pink' in text:
+        return 'VividPink'
+    elif 'pinkish red' in text:
+        return "PinkishRed"
     elif "royal blue"  in text:
         return "RoyalBlue"
+    elif 'vibrant' in text :
+        return 'Vibrant'
+    if "pigeon" in text:
+        return "PigeonsBlood"
     else:
         return text
     
@@ -152,6 +160,7 @@ def detect_cut(cut):
         return "cut"
     
 def detect_shape(shape):
+    shape = str(shape).lower()
     valid_shapes = [
         "cushion", "heart", "marquise", "octagonal", "oval",
         "pear", "rectangular", "round", "square", "triangular",
