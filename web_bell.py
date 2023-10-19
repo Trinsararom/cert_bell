@@ -213,7 +213,7 @@ def detect_color(text):
     elif "cornflower"  in text:
         return "Cornflower"
     elif "pink"  in text:
-        return "pink"
+        return "Pink"
     if "pigeon" in text:
         return "PigeonsBlood"
     else:
@@ -414,6 +414,8 @@ def perform_data_processing(img):
     result_df["Mogok"] = result_df["Origin"].apply(detect_mogok)
     result_df["Indication"] = result_df["indications"].apply(generate_indication)
     result_df = extract_cert_info(result_df, 'certNo')
+    result_df['certNO'] = result_df['certNO'].str.replace(", ", "")
+    result_df['certNO'] = result_df['certNO'].apply(lambda x: 'R' + x if x.startswith('-') and not x.startswith('R-') else x)
     result_df["carat"] = result_df["Carat"].apply(convert_carat_to_numeric)
     result_df[["length", "width", "height"]] = result_df["Dimensions"].apply(convert_dimension).apply(pd.Series)
     result_df = rename_identification_to_stone(result_df)
