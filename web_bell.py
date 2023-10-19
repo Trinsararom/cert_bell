@@ -82,7 +82,6 @@ def extract_gemstone_info(img):
     lines2 = [line for line in extracted_texts2.split('\n')]
     lines2 = [line.strip() for line in lines2 if line.strip()]
     if len(lines2) == 6 :
-        lines2 = lines2[0:4]
         lines2 = [line.split() for line in lines2]
         g = lines2[0][-1]
         ct = lines2[1][-2] + ' ct'
@@ -90,7 +89,6 @@ def extract_gemstone_info(img):
         s = lines2[3][-1]
         lines2 = [g] + [ct] + [dimen] + [s]
     else:
-        lines2 = lines2[0:4]
         lines2 = [line.split() for line in lines2]
         g = 'gem'
         ct = lines2[0][-2] + ' ct'
@@ -121,6 +119,15 @@ def extract_gemstone_info(img):
                                 5:'Shape', 6: 'Identification',
                                 7: 'Color', 8:'indications',
                                 9: 'Origin', 10: 'Color0'})
+    elif len(combined_lines) == 10 :
+        df = pd.DataFrame({i: [combined_lines[i]] for i in range(10)})
+        df[0] = df[0].str.strip('REPORT No.')
+        df = df.drop([2], axis=1)
+        df = df.rename(columns={0: 'certNo', 1:'issuedDate',
+                                3:'Carat',4 : 'Dimensions', 
+                                5:'Shape', 6: 'Identification',
+                                7: 'Color', 8:'indications',
+                                9: 'Origin'})
     else :
         df = pd.DataFrame({i: [combined_lines[i]] for i in range(10)})
         df[0] = df[0].str.strip('REPORT No.')
@@ -131,6 +138,62 @@ def extract_gemstone_info(img):
                                 7: 'Color', 8:'indications',
                                 9: 'Origin'})
         
+    return df
+
+def extract_gemstone_info1(img):
+    crop1, crop2, crop3, crop4, crop5 = crop_image(img)
+
+    extracted_texts1 = process_cropped_images(crop1)
+    lines1 = [line for line in extracted_texts1.split('\n') if line.strip()]
+
+    extracted_texts2 = process_cropped_images(crop2)
+    lines2 = [line for line in extracted_texts2.split('\n')]
+    lines2 = [line.strip() for line in lines2 if line.strip()]
+    lines2 = [line.split() for line in lines2]
+    g = lines2[0][-1]
+    ct = lines2[1][-2] + ' ct'
+    dimen = lines2[2][-6] + ' x ' + lines2[2][-4] + ' x ' +lines2[2][-2] + ' mm'
+    s = lines2[3][-1]
+    id = lines2[4][-1]
+    c = lines2[5][-1]
+    lines2 = [g] + [ct] + [dimen] + [s] + [id] +[c]
+
+    extracted_texts5 = process_cropped_images(crop5)
+    # Split each line by space and take only parts after the first space (if space exists)
+    lines5 = [line.split(' ', 1)[1] if ' ' in line else line for line in extracted_texts5.split('\n')]
+
+    # Remove leading and trailing whitespace from each line and filter out empty strings
+    lines5 = [line.strip() for line in lines5 if line.strip()]
+
+    extracted_texts4 = process_cropped_images(crop4)
+    lines4 = [line for line in extracted_texts4.split('\n') if line.strip()]
+
+    extracted_texts3 = process_cropped_images(crop3)
+    lines3 = [line for line in extracted_texts3.split('\n') if line.strip()]
+    filtered_lines3 = [line for line in lines3 if 'may be called' in line]
+
+    combined_lines = lines1 + lines2+ lines5 + lines4 + filtered_lines3
+
+    if len(combined_lines) == 11 :
+        df = pd.DataFrame({i: [combined_lines[i]] for i in range(11)})
+        df[0] = df[0].str.strip('REPORT No.')
+        df[10] = df[10].str.extract(r'may be called "([^"]+)"', expand=False)
+        df = df.drop([2], axis=1)
+        df = df.rename(columns={0: 'certNo', 1:'issuedDate',
+                                3:'Carat',4 : 'Dimensions', 
+                                5:'Shape', 6: 'Identification',
+                                7: 'Color', 8:'indications',
+                                9: 'Origin', 10: 'Color0'})
+    elif len(combined_lines) == 10 :
+        df = pd.DataFrame({i: [combined_lines[i]] for i in range(10)})
+        df[0] = df[0].str.strip('REPORT No.')
+        df = df.drop([2], axis=1)
+        df = df.rename(columns={0: 'certNo', 1:'issuedDate',
+                                3:'Carat',4 : 'Dimensions', 
+                                5:'Shape', 6: 'Identification',
+                                7: 'Color', 8:'indications',
+                                9: 'Origin'})
+    
     return df
 
 def detect_color(text):
@@ -199,7 +262,7 @@ def detect_mogok(origin):
 
 def generate_indication(comment):
     comment = str(comment).lower()
-    if "no" in comment or 'TE1' in comment:
+    if "no" in comment or 'te1' in comment:
         return "Unheated"
     else:
         return "Heated"
@@ -276,13 +339,20 @@ def rename_identification_to_stone(dataframe):
 
     # Function to remove "Natural" or "Star" from the stone name
     def remove_prefix(name):
-        for prefix in ["Natural", "Star"]:
+        for prefix in ["Natural", "Star", "Natura"]:
             name = name.replace(prefix, "").strip()
         return name
 
-    # Update the "Stone" column with the dynamically modified names
+    # Function to get the last word if there are multiple words
+    def get_last_word(name):
+        words = name.split()
+        if len(words) > 1:
+            return words[-1]
+        return name
+
+    # Update the "Stone" column with dynamically modified names and the last word
     dataframe["Stone"] = dataframe["Stone"].apply(
-        lambda x: modify_stone_name(remove_prefix(x))
+        lambda x: modify_stone_name(remove_prefix(get_last_word(x)))
     )
 
     return dataframe
@@ -293,8 +363,10 @@ def detect_vibrant(Vibrant):
 
 # Define the function to perform all data processing steps
 def perform_data_processing(img):
-    
-    result_df = extract_gemstone_info(img)
+    try:
+        result_df = extract_gemstone_info(img)
+    except Exception as e:
+        result_df = extract_gemstone_info1(img)
     
     result_df["Detected_Origin"] = result_df["Origin"].apply(detect_origin)
     result_df["Detected_Origin"] = result_df["Detected_Origin"].str.replace('Ceylon','Sri Lanka').str.replace('Cevlon','Sri Lanka')
