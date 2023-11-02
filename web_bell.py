@@ -424,7 +424,7 @@ def perform_data_processing(img):
         result_df = extract_gemstone_info1(img)
     
     result_df["Detected_Origin"] = result_df["Origin"].apply(detect_origin)
-    result_df["Detected_Origin"] = result_df["Detected_Origin"].str.replace('Ceylon','Sri Lanka').str.replace('Cevlon','Sri Lanka')
+    result_df["Detected_Origin"] = result_df["Detected_Origin"].str.replace('Ceylon','Sri Lanka').str.replace('Cevlon','Sri Lanka').str.replace('Cevion','Sri Lanka')
     result_df["Indication"] = result_df["indications"].apply(generate_indication)
     result_df["oldHeat"] = result_df.apply(lambda row: detect_old_heat(row["indications"], row["Indication"]), axis=1)
     
